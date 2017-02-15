@@ -1,0 +1,16 @@
+"hg7086
+
+loadplugins '\.(js|penta)$'
+group user
+command! -nargs=* privopen private winopen <args>
+map -count -modes=n,v d -builtin <count><Pass>
+set defsearch=ddg
+set findflags=rc
+set guioptions=bCrsnTm
+set hintkeys=0123456789abcdefghijklmnopqrstuvwxyz
+set hinttimeout=1500
+set hlfind
+set newtab=all
+set wildmode=list:longest,list:full
+
+" vim: set ft=pentadactyl:
