@@ -1,13 +1,10 @@
 set nocompatible
-"source $VIMRUNTIME/vimrc_example.vim
-"source $VIMRUNTIME/mswin.vim
-behave mswin
 
 if has('mouse')
   set mouse=a
 endif
 if has('gui_running')
-  set guifont=Tamsyn7x13
+  set guifont=Monospace
   set lines=54 columns=160
 endif
 set backspace=indent,eol,start
@@ -16,8 +13,6 @@ filetype plugin on
 let g:tex_flavor='latex'
 
 highlight link EoLWS ErrorMsg
-"au InsertEnter * match EoLWS /\s\+\%#\@<!$/
-"au InsertLeave * match EoLWS /\s\+$/
 match EoLWS /\s\+$/
 
 syntax on
@@ -30,6 +25,7 @@ set wildmode=list:longest
 set listchars=eol:$,tab:>.,extends:\\,precedes:\\
 set nowrap
 set scrolloff=3
+set shiftwidth=2
 set sidescrolloff=6
 set sidescroll=1
 set autoindent
@@ -37,9 +33,19 @@ set tabstop=2
 set expandtab
 set hlsearch
 set incsearch
+set colorcolumn=80
+set undofile
+set undodir=~/.vimundo
+
+augroup CursorLine
+  au!
+  au vimEnter,WinEnter,BufWinEnter * setlocal cursorline
+  au WinLeave * setlocal nocursorline
+augroup END
 
 nmap <F2> :ls<CR>:bu!<space>
 
+set t_Co=256
 colorscheme mine
 
 set diffexpr=MyDiff()

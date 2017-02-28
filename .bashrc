@@ -5,10 +5,8 @@
 # If not running interactively, don't do anything
 [[ $- != *i* ]] && return
 
-#PS1='[\u@\h \W]\$ '
-
 export SOURCED=":"
-for f in ./.conf/*.bashrc; do
+[ -d $(dirname "$BASH_SOURCE")/.conf ] && for f in $(dirname "$BASH_SOURCE")/.conf/*.bashrc; do
   source $f
 done
 
