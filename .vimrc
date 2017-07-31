@@ -12,11 +12,6 @@ set shellslash
 filetype plugin on
 let g:tex_flavor='latex'
 
-highlight link EoLWS ErrorMsg
-match EoLWS /\s\+$/
-
-syntax on
-
 set laststatus=2
 set statusline=%2n:%m%y%w%<%f%=%4b/%04B\ \ %4l,%-7(%c%V%)\ \ %P
 set history=1000
@@ -47,6 +42,11 @@ nmap <F2> :ls<CR>:bu!<space>
 
 set t_Co=256
 colorscheme mine
+
+highlight link EoLWS ErrorMsg
+match EoLWS /\s\+$/
+
+syntax on
 
 set diffexpr=MyDiff()
 function MyDiff()

@@ -3,71 +3,10 @@ file=$(basename "$BASH_SOURCE");name=${file%.*};if [[ $SOURCED == *":${name}:"* 
 function grokexit() {
   local errno
   if [ $1 -gt 127 ]; then
-    errno=$(($1-127))
-    case $errno in
-       1) echo "SIGHUP";;
-       2) echo "SIGINT";;
-       3) echo "SIGQUIT";;
-       4) echo "SIGILL";;
-       5) echo "SIGTRAP";;
-       6) echo "SIGABRT";;
-       7) echo "SIGBUS";;
-       8) echo "SIGFPE";;
-       9) echo "SIGKILL";;
-      10) echo "SIGUSR1";;
-      11) echo "SIGSEGV";;
-      12) echo "SIGUSR2";;
-      13) echo "SIGPIPE";;
-      14) echo "SIGALRM";;
-      15) echo "SIGTERM";;
-      16) echo "SIGSTKF";;
-      17) echo "SIGCHLD";;
-      18) echo "SIGCONT";;
-      19) echo "SIGSTOP";;
-      20) echo "SIGTSTP";;
-      21) echo "SIGTTIN";;
-      22) echo "SIGTTOU";;
-      23) echo "SIGURG";;
-      24) echo "SIGXCPU";;
-      25) echo "SIGXFSZ";;
-      26) echo "SIGVTAL";;
-      27) echo "SIGPROF";;
-      28) echo "SIGWINCH";;
-      29) echo "SIGIO";;
-      30) echo "SIGPWR";;
-      31) echo "SIGSYS";;
-      34) echo "SIGRTMIN";;
-      35) echo "SIGRTMIN+1";;
-      36) echo "SIGRTMIN+2";;
-      37) echo "SIGRTMIN+3";;
-      38) echo "SIGRTMIN+4";;
-      39) echo "SIGRTMIN+5";;
-      40) echo "SIGRTMIN+6";;
-      41) echo "SIGRTMIN+7";;
-      42) echo "SIGRTMIN+8";;
-      43) echo "SIGRTMIN+9";;
-      44) echo "SIGRTMIN+10";;
-      45) echo "SIGRTMIN+11";;
-      46) echo "SIGRTMIN+12";;
-      47) echo "SIGRTMIN+13";;
-      48) echo "SIGRTMIN+14";;
-      49) echo "SIGRTMIN+15";;
-      50) echo "SIGRTMAX-14";;
-      51) echo "SIGRTMAX-13";;
-      52) echo "SIGRTMAX-12";;
-      53) echo "SIGRTMAX-11";;
-      54) echo "SIGRTMAX-10";;
-      55) echo "SIGRTMAX-9";;
-      56) echo "SIGRTMAX-8";;
-      57) echo "SIGRTMAX-7";;
-      58) echo "SIGRTMAX-6";;
-      59) echo "SIGRTMAX-5";;
-      60) echo "SIGRTMAX-4";;
-      61) echo "SIGRTMAX-3";;
-      62) echo "SIGRTMAX-2";;
-      63) echo "SIGRTMAX-1";;
-      64) echo "SIGRTMAX";;
-    esac
+    errno=$(($1-128))
+    if [ $errno -lt 64 ]; then
+      echo "SIG$(kill -l ${errno})"
+    fi
   else
     case $1 in
       0) echo "SUCCESS";;
@@ -97,15 +36,18 @@ function histsearch() {
     esac
   done
   shift $((OPTIND-1))
-  history | grep "$@" | tac | head -n $limit
+  history | head -n -1 | grep "$@" | tac | head -n $limit
 }
-alias hist?='histsearch'
+alias 'hist?'='histsearch'
 
-function colorise() {
-  local format opt OPTIND OPTARG esc
+function colourise() {
+  local format opt OPTIND OPTARG esc flags
   format='%Y-%m-%d:%H.%M.%S'
-  while getopts ":t:" opt; do
+  while getopts ":nt:" opt; do
     case $opt in
+      n)
+        flags+=' -n'
+        ;;
       t)
         format=$OPTARG
         ;;
@@ -115,13 +57,13 @@ function colorise() {
         ;;
     esac
   done
-  esc=$(echo -e -n "\033")
+  esc="$(echo -e -n "\033")"
   shift $((OPTIND-1))
   sed -r -e 's/%%/%%!/g' \
          -e 's/%\{(.+),(.+)\}/%{\1}%{,\2}/g' \
-         -e "s/%\{#([0-9]+)\}/$esc[38;5;\1m/g" \
-         -e "s/%\{,#([0-9]+)\}/$esc[48;5;\1m/g" \
-         -e 's/%\{(,?.)\}/%\1/g' \
+         -e "s/%\\{#([0-9]+)\\}/$esc[38;5;\\1m/g" \
+         -e "s/%\\{,#([0-9]+)\\}/$esc[48;5;\\1m/g" \
+         -e 's/%\{(,?[^{}]+)\}/%\1/g' \
          -e "s/%l/$(tput setaf 0)/g" \
          -e "s/%r/$(tput setaf 1)/g" \
          -e "s/%g/$(tput setaf 2)/g" \
@@ -148,7 +90,21 @@ function colorise() {
          -e "s/%U/$(tput rmul)/g" \
          -e "s/%t/$(date +"${format}")/g" \
          -e 's/%%!/%/g' \
-         < <(echo "$@")
+         < <(echo ${flags} "$@")
+}
+
+function colours() {
+  local num_colours
+  num_colours=$(tput colors)
+  if [ $num_colours -le 256 ]; then
+    for i in $(seq 0 ${num_colours}); do
+      printf "%4d " ${i}
+      tput setab ${i}
+      printf "      "
+      tput sgr0
+      [ $((i%6)) -eq 3 ] && [ $i -ge 15 ] && echo '' || :
+    done
+  fi
 }
 
 function exists() {
@@ -161,15 +117,13 @@ if exists python; then
   }
 fi
 
-function nop() {
-  return 0
-}
+alias nop=':'
 
 function prepend_live() {
   local at_newline char prepend_string noformat format opt OPTIND OPTARG
   noformat=1
   format='%Y-%m-%d:%H.%M.%S'
-  while getopts ":ft:" opt; do
+  while getopts ':ft:' opt; do
     case $opt in
       f)
         unset noformat
@@ -184,7 +138,7 @@ function prepend_live() {
     esac
   done
   at_newline=1
-  while IFS= read -d'' -s -N 1 char; do
+  while IFS= read -r -d'' -s -N 1 char; do
     if [ $at_newline ]; then
       if [ $noformat ]; then
         prepend_string="$@"
@@ -197,8 +151,22 @@ function prepend_live() {
       fi
       echo -n "$prepend_string"
     fi
-    printf "$char"
+    printf "%s" "$char"
     unset at_newline
     [ "$char" == $'\n' ] && at_newline=1
+  done
+}
+
+function nth() {
+  local input max
+  max=0
+  for l in "$@"; do
+    if [ $l -gt $max ]; then
+      max=$l
+    fi
+  done
+  input="$(head -n $max)"
+  for l in "$@"; do
+    head -n $l <<< "${input}" | tail -n 1
   done
 }
